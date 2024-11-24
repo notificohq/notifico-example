@@ -1,20 +1,31 @@
 version: "3"
 services:
-  apiserver:
-    image: notificohq/notifico-apiserver
+  ingest:
+    image: notificohq/notifico-ingest
     environment: &environment
       NOTIFICO_AMQP_URL: amqp://guest:guest@rabbitmq:5672/
       NOTIFICO_SECRET_KEY: weak-secret-key
-      NOTIFICO_DB_URL: sqlite:///var/lib/notifico/db.sqlite3
-      NOTIFICO_CLIENT_API_URL: http://127.0.0.1:9000/
+      NOTIFICO_DB: sqlite:///var/lib/notifico/db.sqlite3
+      NOTIFICO_USERAPI_URL: http://localhost:9000/
+    ports:
+      - "8001:8000"
+  userapi:
+    image: notificohq/notifico-userapi
+    environment: *environment  # Same environment
+    ports:
+      - "9000:8000"
+    volumes:
+      - "./db.sqlite3:/var/lib/notifico/db.sqlite3"
+  web:
+    image: notificohq/notifico-web
+    environment: *environment  # Same environment
     ports:
       - "8000:8000"
-      - "9000:9000"
     volumes:
       - "./db.sqlite3:/var/lib/notifico/db.sqlite3"
   worker:
     image: notificohq/notifico-worker
-    environment: *environment  # Same environment as in apiserver
+    environment: *environment  # Same environment
     volumes:
       - "./credentials.toml:/var/lib/notifico/credentials.toml"
       - "./db.sqlite3:/var/lib/notifico/db.sqlite3"
